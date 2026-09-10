@@ -1,50 +1,54 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
+# dependencias
+node_modules/
 
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# proyecto nativo: lo regenera `expo prebuild`, no se versiona
+/android
+/ios
+.kotlin/
+*.orig.*
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
+# APK compilados
+*.apk
 
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# Signing key — never commit
-android/key.properties
+# Firma del APK. Guárdala junto a las copias de seguridad: si se pierde, no se
+# puede instalar encima y hay que desinstalar, lo que BORRA los datos de la app.
 *.jks
+*.p8
+*.p12
+*.key
 *.keystore
+*.mobileprovision
+keystore.properties
+
+# Copias de seguridad: pueden llevar fotos y datos personales. Nunca al repo.
+ludovis-backup-*.json
+
+# Datos tirados de un móvil real para migrar desde la versión de Flutter.
+migracion-flutter/
+
+# logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.metro-health-check*
+
+# typescript
+*.tsbuildinfo
+
+# entorno local
+.env*.local
+
+# editores
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.sw?

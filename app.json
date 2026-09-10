@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Ludovis",
+    "slug": "ludovis",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "ludovis",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.ludok.ludovis",
+      "adaptiveIcon": {
+        "backgroundColor": "#0a0a0c",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-image",
+      "expo-sharing",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Ludovis usa la cámara para escanear el código de tus entradas y para fotografiar tarjetas."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Ludovis accede a tus fotos para guardar la imagen de una tarjeta o entrada.",
+          "cameraPermission": "Ludovis usa la cámara para fotografiar tarjetas y entradas."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "backgroundColor": "#0a0a0c",
+          "imageWidth": 160
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ]
+  }
+}

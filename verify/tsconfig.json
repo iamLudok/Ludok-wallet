@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "ESNext",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    // Sin esto, `bwip-js` (que tiene "exports" condicionales por plataforma)
+    // resuelve al paquete de React Native en vez de al de Node y `tsc` no
+    // encuentra sus tipos — aquí sí corre Node de verdad, así que se le pide
+    // esa condición explícitamente.
+    "customConditions": ["node"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "lib": ["ESNext"]
+  },
+  "include": ["**/*.ts", "../src/**/*.ts", "../scripts/**/*.ts"]
+}
