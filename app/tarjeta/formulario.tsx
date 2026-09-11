@@ -14,7 +14,7 @@ import { TopBar } from '../../src/components/TopBar'
 import { useCard } from '../../src/hooks/useCards'
 import { saveCard } from '../../src/lib/library'
 import { saveImage, imageUri } from '../../src/lib/images'
-import { parseCardOcr } from '../../src/lib/ocr'
+import { parseCardOcr, mergeCardOcr, type OcrCardResult } from '../../src/lib/ocr'
 import { CARD_TYPES, CARD_TYPE_LABELS } from '../../src/lib/cardTypes'
 import type { CardType } from '../../src/types'
 
@@ -64,11 +64,23 @@ export default function TarjetaFormularioScreen() {
     setLoaded(true)
   }, [loaded, ready, existing])
 
-  const runOcr = async (uri: string) => {
+  /**
+   * Lee una o varias fotos y fusiona lo que saque de cada una (el anverso
+   * suele llevar teléfono/nombre, el reverso a veces trae la dirección o el
+   * horario en el dorso) — antes solo se leía el anverso, y la mitad de los
+   * datos de una tarjeta con reverso impreso se quedaban siempre fuera.
+   * El orden de `uris` decide qué foto gana si las dos traen el mismo campo.
+   */
+  const runOcr = async (uris: string[]) => {
+    if (!uris.length) return
     setOcrRunning(true)
     try {
-      const result = await TextRecognition.recognize(uri, TextRecognitionScript.LATIN)
-      const parsed = parseCardOcr(result.text)
+      let merged: OcrCardResult = { rawText: '' }
+      for (const uri of uris) {
+        const result = await TextRecognition.recognize(uri, TextRecognitionScript.LATIN)
+        merged = mergeCardOcr(merged, parseCardOcr(result.text))
+      }
+
       let any = false
       const fill = (current: string, setter: (v: string) => void, value?: string) => {
         if (value && !current) {
@@ -76,11 +88,11 @@ export default function TarjetaFormularioScreen() {
           any = true
         }
       }
-      fill(phone, setPhone, parsed.phone)
-      fill(email, setEmail, parsed.email)
-      fill(address, setAddress, parsed.address)
-      fill(website, setWebsite, parsed.website)
-      fill(social, setSocial, parsed.social)
+      fill(phone, setPhone, merged.phone)
+      fill(email, setEmail, merged.email)
+      fill(address, setAddress, merged.address)
+      fill(website, setWebsite, merged.website)
+      fill(social, setSocial, merged.social)
       Alert.alert(
         any ? 'Datos detectados' : 'Sin datos',
         any ? 'Revisa y corrige si hace falta.' : 'No se detectaron datos reconocibles.',
@@ -92,22 +104,31 @@ export default function TarjetaFormularioScreen() {
     }
   }
 
-  const onFrontPicked = (uri: string) => {
-    setFrontUri(uri)
-    setFrontIsNew(true)
+  /** Las fotos que hay ahora mismo, anverso primero — para leerlas juntas. */
+  const bothPhotos = (front: string | undefined, back: string | undefined): string[] =>
+    [front, back].filter((u): u is string => !!u)
+
+  const offerOcr = (uris: string[]) => {
     Alert.alert(
       '¿Escanear datos?',
       'Puedo intentar detectar teléfono, email, dirección y web. ¿Lo pruebo?',
       [
         { text: 'No, gracias', style: 'cancel' },
-        { text: 'Sí, escanear', onPress: () => runOcr(uri) },
+        { text: 'Sí, escanear', onPress: () => runOcr(uris) },
       ],
     )
+  }
+
+  const onFrontPicked = (uri: string) => {
+    setFrontUri(uri)
+    setFrontIsNew(true)
+    offerOcr(bothPhotos(uri, backUri))
   }
 
   const onBackPicked = (uri: string) => {
     setBackUri(uri)
     setBackIsNew(true)
+    offerOcr(bothPhotos(frontUri, uri))
   }
 
   const save = async () => {
@@ -159,11 +180,17 @@ export default function TarjetaFormularioScreen() {
               uri={frontUri}
               onChange={onFrontPicked}
               ocrRunning={ocrRunning}
-              onRescan={frontUri ? () => runOcr(frontUri) : undefined}
+              onRescan={frontUri ? () => runOcr(bothPhotos(frontUri, backUri)) : undefined}
             />
           </View>
           <View style={{ flex: 1 }}>
-            <PhotoSlot label="Reverso" uri={backUri} onChange={onBackPicked} />
+            <PhotoSlot
+              label="Reverso"
+              uri={backUri}
+              onChange={onBackPicked}
+              ocrRunning={ocrRunning}
+              onRescan={backUri ? () => runOcr(bothPhotos(frontUri, backUri)) : undefined}
+            />
           </View>
         </View>
 

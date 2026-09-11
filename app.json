@@ -46,6 +46,12 @@
         }
       ],
       [
+        "expo-share-intent",
+        {
+          "androidIntentFilters": ["image/*"]
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {

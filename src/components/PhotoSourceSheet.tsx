@@ -13,15 +13,18 @@ interface Props {
 }
 
 /**
- * Pide la foto a la cámara o a la galería. `allowsEditing` deja recortarla con
- * la herramienta del propio sistema — sin depender de una librería de recorte
- * aparte, que en Expo no tiene un equivalente mantenido a `image_cropper`.
+ * Pide la foto a la cámara o a la galería, sin recorte forzado. La misma foto
+ * alimenta el OCR y la detección de códigos, así que recortarla de más antes
+ * de leerla podía dejar fuera justo el teléfono o el código que se buscaba —
+ * mejor la imagen completa, tal cual sale de la cámara. `quality` se sube
+ * respecto al valor por defecto de Expo: menos artefactos de compresión es
+ * menos texto que el reconocedor lee mal.
  */
 async function pickFrom(source: 'camera' | 'gallery'): Promise<string | null> {
   const options: ImagePicker.ImagePickerOptions = {
     mediaTypes: ['images'],
-    allowsEditing: true,
-    quality: 0.85,
+    allowsEditing: false,
+    quality: 0.92,
   }
 
   const permission =

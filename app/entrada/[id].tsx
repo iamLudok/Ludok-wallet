@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Pressable, View, StyleSheet, Alert, ActivityIndicator, useWindowDimensions } from 'react-native'
+import { Pressable, View, ScrollView, StyleSheet, Alert, ActivityIndicator, useWindowDimensions } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { Image } from 'expo-image'
@@ -119,7 +119,7 @@ function DetailView({ ticket, onEdit, onDeleted }: { ticket: Ticket; onEdit: () 
         </Pressable>
       </TopBar>
 
-      <View style={styles.body}>
+      <ScrollView contentContainerStyle={styles.body}>
         <Txt variant="display">{ticket.title}</Txt>
         {ticket.venue ? <Txt variant="body" tone="muted">{ticket.venue}</Txt> : null}
         {ticket.eventAt ? <Txt variant="body" tone="muted">{formatEventDate(ticket.eventAt)}</Txt> : null}
@@ -147,13 +147,13 @@ function DetailView({ ticket, onEdit, onDeleted }: { ticket: Ticket; onEdit: () 
             <Txt variant="body">{ticket.notes}</Txt>
           </View>
         ) : null}
-      </View>
+      </ScrollView>
     </Screen>
   )
 }
 
 const styles = StyleSheet.create({
-  body: { padding: space.lg, gap: space.sm },
+  body: { padding: space.lg, paddingBottom: space.xxl, gap: space.sm },
   codeCard: {
     marginTop: space.md,
     borderRadius: radius.lg,

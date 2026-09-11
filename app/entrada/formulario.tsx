@@ -20,6 +20,7 @@ import { saveImage, imageUri } from '../../src/lib/images'
 import { parseTicketOcr } from '../../src/lib/ocr'
 import { CODE_FORMAT_LABELS, SELECTABLE_CODE_FORMATS } from '../../src/lib/codes'
 import { setScanListener } from '../../src/lib/scanBridge'
+import { takePendingTicketPrefill } from '../../src/lib/ticketPrefillBridge'
 import type { CodeFormat } from '../../src/types'
 
 const ALL_FORMATS: CodeFormat[] = [
@@ -51,6 +52,11 @@ export default function EntradaFormularioScreen() {
 
   const [imgUri, setImgUri] = useState<string | undefined>()
   const [imgIsNew, setImgIsNew] = useState(false)
+  // Nombre YA guardado en el almacenamiento de la app: el de una entrada que
+  // se está editando, o el que ya dejó ahí una importación de imagen/PDF
+  // antes de llegar aquí. Se usa tal cual al guardar; `imgIsNew` es solo para
+  // una foto elegida DENTRO de este formulario, que todavía hay que copiar.
+  const [savedImageName, setSavedImageName] = useState<string | undefined>()
 
   const [ocrRunning, setOcrRunning] = useState(false)
   const [detecting, setDetecting] = useState(false)
@@ -71,9 +77,32 @@ export default function EntradaFormularioScreen() {
     setEventAt(existing.eventAt)
     setCode(existing.code)
     setCodeFormat(existing.codeFormat)
-    if (existing.image) setImgUri(imageUri(existing.image))
+    if (existing.image) {
+      setImgUri(imageUri(existing.image))
+      setSavedImageName(existing.image)
+    }
     setLoaded(true)
   }, [loaded, ready, existing])
+
+  // Entrada nueva (sin id) creada desde el «+»: si el código/la foto/el PDF ya
+  // se leyeron antes de llegar aquí (imagen, PDF o cámara), se rellena con
+  // eso. Solo una vez — `takePendingTicketPrefill` vacía el buzón al leerlo.
+  useEffect(() => {
+    if (id) return
+    const prefill = takePendingTicketPrefill()
+    if (!prefill) return
+    if (prefill.title) setTitle(prefill.title)
+    if (prefill.venue) setVenue(prefill.venue)
+    if (prefill.price) setPrice(prefill.price)
+    if (prefill.eventAt) setEventAt(prefill.eventAt)
+    if (prefill.code) setCode(prefill.code)
+    if (prefill.codeFormat) setCodeFormat(prefill.codeFormat)
+    if (prefill.image) {
+      setImgUri(imageUri(prefill.image))
+      setSavedImageName(prefill.image)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   // El escáner de cámara avisa por aquí en vez de por parámetros de ruta: así
   // no se pierde nada de lo que ya llevabas escrito en el formulario.
@@ -167,7 +196,7 @@ export default function EntradaFormularioScreen() {
     }
     setSaving(true)
     try {
-      const image = imgUri ? (imgIsNew ? await saveImage(imgUri) : existing?.image) : undefined
+      const image = imgUri ? (imgIsNew ? await saveImage(imgUri) : savedImageName) : undefined
       await saveTicket(
         {
           title: title.trim(),

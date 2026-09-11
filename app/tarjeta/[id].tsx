@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Animated, Pressable, View, StyleSheet, Alert, Linking, ActivityIndicator } from 'react-native'
+import { Animated, Pressable, View, ScrollView, StyleSheet, Alert, Linking, ActivityIndicator } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Image } from 'expo-image'
 import { Screen } from '../../src/ui/Screen'
@@ -92,6 +92,7 @@ function DetailView({ card, onEdit, onDeleted }: { card: Card; onEdit: () => voi
         </Pressable>
       </TopBar>
 
+      <ScrollView contentContainerStyle={{ paddingBottom: space.xxl }}>
       <Pressable onPress={canFlip ? doFlip : undefined} style={styles.photoWrap}>
         <Animated.View
           style={[
@@ -142,10 +143,10 @@ function DetailView({ card, onEdit, onDeleted }: { card: Card; onEdit: () => voi
         )}
 
         <View style={styles.actions}>
-          {card.phone && <ActionRow label={card.phone} onPress={() => Linking.openURL(`tel:${card.phone}`)} />}
-          {card.phone2 && <ActionRow label={card.phone2} onPress={() => Linking.openURL(`tel:${card.phone2}`)} />}
-          {card.email && <ActionRow label={card.email} onPress={() => Linking.openURL(`mailto:${card.email}`)} />}
-          {card.address && (
+          {!!card.phone && <ActionRow label={card.phone} onPress={() => Linking.openURL(`tel:${card.phone}`)} />}
+          {!!card.phone2 && <ActionRow label={card.phone2} onPress={() => Linking.openURL(`tel:${card.phone2}`)} />}
+          {!!card.email && <ActionRow label={card.email} onPress={() => Linking.openURL(`mailto:${card.email}`)} />}
+          {!!card.address && (
             <ActionRow
               label={card.address}
               onPress={async () => {
@@ -156,15 +157,16 @@ function DetailView({ card, onEdit, onDeleted }: { card: Card; onEdit: () => voi
               }}
             />
           )}
-          {card.website && (
+          {!!card.website && (
             <ActionRow
               label={card.website}
               onPress={() => Linking.openURL(card.website!.startsWith('http') ? card.website! : `https://${card.website}`)}
             />
           )}
-          {card.social && <ActionRow label={instagramLabel(card.social)} onPress={() => openInstagram(card.social!)} />}
+          {!!card.social && <ActionRow label={instagramLabel(card.social)} onPress={() => openInstagram(card.social!)} />}
         </View>
       </View>
+      </ScrollView>
     </Screen>
   )
 }

@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react'
 import { View, Pressable, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { Txt } from '../../src/ui/Text'
 import { space } from '../../src/ui/theme'
 import { emitScan } from '../../src/lib/scanBridge'
+import { setPendingTicketPrefill } from '../../src/lib/ticketPrefillBridge'
 import type { CodeFormat } from '../../src/types'
 
 /** Todos los formatos que sabe leer la cámara — coinciden con `CodeFormat`. */
@@ -24,8 +25,17 @@ const ALL_FORMATS: CodeFormat[] = [
   'datamatrix',
 ]
 
-/** Abre la cámara, y al detectar un código avisa al formulario que la abrió y vuelve atrás. */
+/**
+ * Abre la cámara para escanear un código. Sirve para dos sitios distintos:
+ *
+ * - Desde el formulario ya abierto (`?mode=edit` o sin parámetro): avisa por
+ *   `scanBridge` al formulario, que ya está escuchando, y vuelve atrás.
+ * - Desde el «+» de Entradas (`?mode=new`), antes de que exista ningún
+ *   formulario: aquí no hay nadie escuchando, así que el código se deja en
+ *   `ticketPrefillBridge` y se avanza HACIA el formulario nuevo, no atrás.
+ */
 export default function EscanearScreen() {
+  const { mode } = useLocalSearchParams<{ mode?: string }>()
   const router = useRouter()
   const [permission, requestPermission] = useCameraPermissions()
   const [torch, setTorch] = useState(false)
@@ -34,8 +44,14 @@ export default function EscanearScreen() {
   const onScanned = ({ data, type }: { data: string; type: string }) => {
     if (detected.current) return
     detected.current = true
-    emitScan(data, type as CodeFormat)
-    router.back()
+    const codeFormat = type as CodeFormat
+    if (mode === 'new') {
+      setPendingTicketPrefill({ code: data, codeFormat })
+      router.replace('/entrada/formulario')
+    } else {
+      emitScan(data, codeFormat)
+      router.back()
+    }
   }
 
   if (!permission) return null
