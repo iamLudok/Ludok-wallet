@@ -1,4 +1,4 @@
-// Modelo de datos de Ludovis.
+// Modelo de datos de Ludok Wallet.
 //
 // Todo vive en local: la base de datos en el SQLite privado de la app y las
 // fotos como ficheros sueltos en `images/`. La base guarda solo el NOMBRE del
@@ -109,7 +109,7 @@ export interface Settings {
  * antigua, o una hecha a mano, nunca se rechaza por ese motivo.
  */
 export interface BackupFile {
-  app: 'ludovis'
+  app: 'ludok-wallet'
   schemaVersion: number
   exportedAt: number
   cards: Card[]

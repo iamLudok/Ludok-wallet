@@ -13,7 +13,7 @@ export { newId } from './ids'
  * `enableChangeListener` es imprescindible: es lo que hace que `useLiveQuery`
  * de Drizzle se entere de los cambios y vuelva a pintar las pantallas solo.
  */
-export const sqlite = SQLite.openDatabaseSync('ludovis.db', {
+export const sqlite = SQLite.openDatabaseSync('ludok-wallet.db', {
   enableChangeListener: true,
 })
 

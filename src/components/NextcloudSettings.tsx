@@ -57,7 +57,7 @@ export function NextcloudSettings() {
       nextcloudUrl: url.trim(),
       nextcloudUser: user.trim(),
       nextcloudPassword: password,
-      nextcloudFolder: folder.trim() || 'Ludovis',
+      nextcloudFolder: folder.trim() || 'Ludok Wallet',
     })
     setStatus({ ok: true, text: 'Guardado.' })
   }
@@ -131,7 +131,7 @@ export function NextcloudSettings() {
       <Field
         value={folder}
         onChangeText={setFolder}
-        placeholder="Carpeta (por defecto: Ludovis)"
+        placeholder="Carpeta (por defecto: Ludok Wallet)"
         autoCapitalize="none"
         autoCorrect={false}
       />

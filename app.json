@@ -1,17 +1,17 @@
 {
   "expo": {
-    "name": "Ludovis",
-    "slug": "ludovis",
+    "name": "Ludok Wallet",
+    "slug": "ludok-wallet",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "ludovis",
+    "scheme": "ludokwallet",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
     },
     "android": {
-      "package": "com.ludok.ludovis",
+      "package": "com.ludok.wallet",
       "adaptiveIcon": {
         "backgroundColor": "#0a0a0c",
         "foregroundImage": "./assets/android-icon-foreground.png"
@@ -27,14 +27,14 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Ludovis usa la cámara para escanear el código de tus entradas y para fotografiar tarjetas."
+          "cameraPermission": "Ludok Wallet usa la cámara para escanear el código de tus entradas y para fotografiar tarjetas."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Ludovis accede a tus fotos para guardar la imagen de una tarjeta o entrada.",
-          "cameraPermission": "Ludovis usa la cámara para fotografiar tarjetas y entradas."
+          "photosPermission": "Ludok Wallet accede a tus fotos para guardar la imagen de una tarjeta o entrada.",
+          "cameraPermission": "Ludok Wallet usa la cámara para fotografiar tarjetas y entradas."
         }
       ],
       [

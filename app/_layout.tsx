@@ -68,7 +68,7 @@ function Shell() {
   }, [ready])
 
   /**
-   * Alguien comparte una foto CON Ludovis (Galería, WhatsApp, Gmail…): se lee
+   * Alguien comparte una foto CON Ludok Wallet (Galería, WhatsApp, Gmail…): se lee
    * como una entrada nueva —código y, con OCR, título/lugar/fecha— y se abre
    * el formulario ya relleno, igual que al elegirla desde el «+» de Entradas.
    * `expo-share-intent` solo entrega esto por aquí, en el layout raíz: no hay

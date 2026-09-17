@@ -36,7 +36,7 @@ function eq<T>(label: string, actual: T, expected: T) {
 const tempFiles: string[] = []
 let seq = 0
 async function useFreshDb(): Promise<Map<string, string>> {
-  const path = join(tmpdir(), `ludovis-lib-${process.pid}-${seq++}.db`)
+  const path = join(tmpdir(), `ludok-wallet-lib-${process.pid}-${seq++}.db`)
   rmSync(path, { force: true })
   tempFiles.push(path)
   const client = createClient({ url: `file:${path}` })

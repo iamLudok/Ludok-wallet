@@ -21,7 +21,7 @@ function eq<T>(label: string, actual: T, expected: T) {
 }
 
 async function main() {
-  const path = join(tmpdir(), `ludovis-migration-${process.pid}.db`)
+  const path = join(tmpdir(), `ludok-wallet-migration-${process.pid}.db`)
   rmSync(path, { force: true })
   const client = createClient({ url: `file:${path}` })
 

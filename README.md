@@ -1,28 +1,32 @@
-# Ludovis
+# Ludok Wallet
 
 App personal para guardar **tarjetas** (restaurantes, personas, tiendas, hoteles, empresas…) y
 **entradas** de eventos con su código escaneable, tipo cartera física, pero **gratis, sin
 cuentas y local-first**. App Android nativa (Expo/React Native): los datos viven en el
-almacenamiento privado de la app (`/data/data/com.ludok.ludovis/`) y solo desaparecen si
+almacenamiento privado de la app (`/data/data/com.ludok.wallet/`) y solo desaparecen si
 desinstalas — no hace falta pedirle permiso a nadie.
 
 - 💳 **Tarjetas**: nombre, tipo, foto de anverso y reverso (con giro), teléfonos, email,
   dirección, web, Instagram y etiquetas libres.
-- 📷 **Lectura automática (OCR)**: fotografía una tarjeta y la app intenta rellenar teléfono,
-  email, dirección y web sola, a partir del texto de la foto.
+- 📷 **Lectura automática (OCR)**: fotografía anverso y reverso y la app intenta rellenar
+  teléfono, email, dirección y web sola, combinando lo que saque de las dos caras.
 - 🎫 **Entradas**: título, lugar, fecha y hora, precio, notas, una imagen opcional y el código
   (QR o de barras, trece formatos) que se enseña a pantalla completa con el brillo al máximo.
-- 📷➜🔢 El código se consigue escaneándolo con la cámara **o** detectándolo dentro de una foto o
-  captura de pantalla ya guardada (una entrada que llegó por email, por ejemplo).
+- ➕ **Añadir una entrada** pide directamente cámara, imagen de la galería o un PDF — nunca un
+  formulario vacío. Con imagen o PDF, la app lee el código y, con OCR, título/lugar/fecha/precio,
+  y deja el formulario ya relleno para confirmar.
+- 📤 **Compartir desde la Galería**: comparte una foto de una entrada con Ludok Wallet desde el
+  propio menú de compartir de Android y se importa igual que desde el «+».
 - 💾 **Copia de seguridad** export/import en JSON — con las fotos dentro, en base64 — y aviso de
   «días sin copia». Opcionalmente, subida automática a un Nextcloud propio.
 
 ## Por qué nativa (otra vez)
 
-Ludovis nació como app Flutter. Se ha vuelto a escribir en Expo/React Native para seguir el
-mismo patrón que el resto de mis apps (Ludok Time, Ludok Been): SQLite propio con Drizzle,
-copia de seguridad JSON de verdad, capa de datos que se prueba en el escritorio antes de tocar
-el móvil, e identidad visual «Sala oscura» (interfaz monocroma, el color solo con significado).
+Esta app nació como app Flutter, con el nombre «Ludovis». Se ha vuelto a escribir en Expo/React
+Native para seguir el mismo patrón que el resto de mis apps (Ludok Time, Ludok Been): SQLite
+propio con Drizzle, copia de seguridad JSON de verdad, capa de datos que se prueba en el
+escritorio antes de tocar el móvil, e identidad visual «Sala oscura» (interfaz monocroma, el
+color solo con significado).
 
 ## Arranque
 
@@ -40,14 +44,14 @@ se abre el menú de compartir para mandarla a Archivos/Nextcloud/Drive) e **Impo
 restaurarla (reemplaza los datos actuales). Si llevas varios días sin copia, un aviso te lo
 recuerda en las listas de Tarjetas y Entradas.
 
-### Si vienes de la versión de Flutter
+### Si vienes de la versión de Flutter («Ludovis»)
 
-La app de Flutter no tenía exportar/importar, así que hay que sacar sus datos a mano:
+Esa app no tenía exportar/importar, así que hay que sacar sus datos a mano:
 
 ```bash
 # 1. Saca ludovis.sqlite y la carpeta images/ del móvil viejo (adb o root).
 # 2. npm run migrate:flutter -- ruta/a/ludovis.sqlite ruta/a/images
-# 3. En esta app: Ajustes → Importar copia → elige el ludovis-backup-*.json generado.
+# 3. En esta app: Ajustes → Importar copia → elige el ludok-wallet-backup-*.json generado.
 ```
 
 Instrucciones detalladas de cómo sacar esos ficheros del móvil en el propio
@@ -71,14 +75,14 @@ npm run verify:codes      # los trece formatos de código se dibujan y validan
 
 ```
 app/                    rutas (expo-router)
-  (tabs)/                Tarjetas · Entradas · Ajustes
+  (tabs)/                Entradas · Tarjetas · Ajustes
   tarjeta/                ficha y formulario de una tarjeta
   entrada/                ficha, formulario y escáner de una entrada
 src/
-  lib/                    esquema, base de datos, fotos, backup, OCR, códigos
+  lib/                    esquema, base de datos, fotos, backup, OCR, códigos, importación de entradas
   hooks/                  useCards, useTickets, useSettings (useLiveQuery reactivo)
   ui/                      tema (paleta dark/light) y primitivas
-  components/              PhotoSlot, TagInput, CodeView, BackupBanner…
+  components/              PhotoSlot, TagInput, CodeView, TicketSourceSheet, BackupBanner…
 verify/                  scripts Node, no se empaquetan en la app
 scripts/                 build-apk.sh, migrate-from-flutter.ts, gen-assets.py
 ```
@@ -97,6 +101,15 @@ de expresiones regulares, sin nada nativo) extrae teléfono/email/dirección/web
 tarjeta, o título/lugar/fecha/precio de una entrada. Se prueba con textos de ejemplo en
 `verify/ocr.ts`, sin tocar la cámara.
 
+## Importar una entrada desde imagen, PDF o al compartir
+
+`src/lib/ticketImport.ts` junta el escaneo de código (`expo-camera`) y el OCR en una sola
+pasada, tanto para una foto como para un PDF (`react-native-pdf-to-image` renderiza cada página
+hasta encontrar un código). El resultado se deja en `ticketPrefillBridge.ts` — el mismo truco de
+buzón de un solo uso que `scanBridge.ts` — porque quien elige la imagen navega HACIA el
+formulario, no hay ninguna pantalla ya abierta a la que avisar. Compartir una foto desde la
+Galería (`expo-share-intent`) usa el mismo camino, enterándose en `app/_layout.tsx`.
+
 ## Compilar un APK
 
 ```bash
@@ -110,6 +123,7 @@ Necesita `keystore.properties` + una keystore `.jks` propias (gitignored, no se 
 ## Stack
 
 Expo SDK 57 · React Native · Drizzle + expo-sqlite (base de datos) · expo-router (rutas) ·
-expo-camera (cámara y escaneo) · expo-image-picker (fotos) · bwip-js + react-native-svg
-(dibujo de códigos) · @react-native-ml-kit/text-recognition (OCR) · expo-brightness
-(pantalla completa de la entrada).
+expo-camera (cámara y escaneo) · expo-image-picker (fotos) · expo-document-picker +
+react-native-pdf-to-image (importar PDF) · expo-share-intent (compartir desde la Galería) ·
+bwip-js + react-native-svg (dibujo de códigos) · @react-native-ml-kit/text-recognition (OCR) ·
+expo-brightness (pantalla completa de la entrada).

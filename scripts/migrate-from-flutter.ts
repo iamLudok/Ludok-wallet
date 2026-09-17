@@ -1,7 +1,8 @@
 #!/usr/bin/env -S npx tsx
 /**
- * Migra los datos de la versión anterior de Ludovis (Flutter + Drift) a una
- * copia de seguridad de esta app, lista para importar desde Ajustes.
+ * Migra los datos de la versión anterior de la app (Flutter + Drift, entonces
+ * llamada «Ludovis») a una copia de seguridad de Ludok Wallet, lista para
+ * importar desde Ajustes.
  *
  * La app de Flutter no tenía exportar/importar, así que la única forma de
  * sacar los datos es tirar directamente de su base SQLite y de sus fotos:
@@ -17,8 +18,8 @@
  *   3. Ejecuta:
  *      npm run migrate:flutter -- migracion-flutter/ludovis.sqlite migracion-flutter/images
  *
- * Genera `ludovis-backup-<fecha>.json` en la raíz del proyecto: se importa
- * igual que cualquier otra copia, desde Ajustes → Importar copia.
+ * Genera `ludok-wallet-backup-<fecha>.json` en la raíz del proyecto: se
+ * importa igual que cualquier otra copia, desde Ajustes → Importar copia.
  *
  * Se usa @libsql/client para leer el .sqlite (ya es una dependencia de
  * `verify/`) en vez de sumar otra librería solo para esto.
@@ -189,7 +190,7 @@ async function main() {
   })
 
   const backup: BackupFile = {
-    app: 'ludovis',
+    app: 'ludok-wallet',
     schemaVersion: SCHEMA_VERSION,
     exportedAt: Date.now(),
     cards,
@@ -200,7 +201,7 @@ async function main() {
 
   const d = new Date()
   const pad = (x: number) => String(x).padStart(2, '0')
-  const outPath = `ludovis-backup-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`
+  const outPath = `ludok-wallet-backup-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`
   writeFileSync(outPath, JSON.stringify(backup, null, 2))
 
   console.log(`\n${cards.length} tarjetas y ${tickets.length} entradas migradas.`)

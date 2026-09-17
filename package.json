@@ -1,5 +1,5 @@
 {
-  "name": "ludovis",
+  "name": "ludok-wallet",
   "version": "1.0.0",
   "main": "expo-router/entry",
   "private": true,

@@ -102,7 +102,7 @@ export default function AjustesScreen() {
         </Card>
 
         <Txt variant="small" tone="faint" style={{ textAlign: 'center' }}>
-          Ludovis · tus tarjetas y entradas, tuyas.
+          Ludok Wallet · tus tarjetas y entradas, tuyas.
         </Txt>
       </ScrollView>
     </Screen>

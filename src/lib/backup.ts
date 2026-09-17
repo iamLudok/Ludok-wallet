@@ -22,7 +22,7 @@ export function importAll(raw: string): Promise<core.ImportResult> {
 function backupFilename(): string {
   const d = new Date()
   const pad = (x: number) => String(x).padStart(2, '0')
-  return `ludovis-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`
+  return `ludok-wallet-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`
 }
 
 /**
@@ -38,7 +38,7 @@ export async function shareBackup(): Promise<string> {
   if (await Sharing.isAvailableAsync()) {
     await Sharing.shareAsync(file.uri, {
       mimeType: 'application/json',
-      dialogTitle: 'Copia de Ludovis',
+      dialogTitle: 'Copia de Ludok Wallet',
       UTI: 'public.json',
     })
   }

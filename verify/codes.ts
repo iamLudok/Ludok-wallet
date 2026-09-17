@@ -18,7 +18,7 @@ function eq<T>(label: string, actual: T, expected: T) {
 
 // Un valor válido por formato — no todos aceptan cualquier texto.
 const VALID_VALUES: Record<CodeFormat, string> = {
-  qr: 'https://ludovis.example/entrada/123',
+  qr: 'https://ludok-wallet.example/entrada/123',
   code128: 'ABC-123-XYZ',
   ean13: '5901234123457',
   ean8: '96385074',

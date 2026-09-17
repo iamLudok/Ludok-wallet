@@ -32,7 +32,7 @@ function eq<T>(label: string, actual: T, expected: T) {
 const tempFiles: string[] = []
 let dbSeq = 0
 async function freshDb(): Promise<LudokDb> {
-  const path = join(tmpdir(), `ludovis-verify-${process.pid}-${dbSeq++}.db`)
+  const path = join(tmpdir(), `ludok-wallet-verify-${process.pid}-${dbSeq++}.db`)
   rmSync(path, { force: true })
   tempFiles.push(path)
   const client = createClient({ url: `file:${path}` })
@@ -78,7 +78,7 @@ async function main() {
   let db = await freshDb()
   useMemoryImageStore()
   let backup = await exportAll(db)
-  eq('app', backup.app, 'ludovis')
+  eq('app', backup.app, 'ludok-wallet')
   eq('schemaVersion', backup.schemaVersion, SCHEMA_VERSION)
   eq('sin tarjetas', backup.cards.length, 0)
   eq('sin entradas', backup.tickets.length, 0)
@@ -144,7 +144,7 @@ async function main() {
   check('app distinta', await rejects(() => importAll(db, JSON.stringify({ app: 'otra-app', schemaVersion: 1, cards: [], tickets: [] }))))
   check(
     'versión futura',
-    await rejects(() => importAll(db, JSON.stringify({ app: 'ludovis', schemaVersion: SCHEMA_VERSION + 1, cards: [], tickets: [] }))),
+    await rejects(() => importAll(db, JSON.stringify({ app: 'ludok-wallet', schemaVersion: SCHEMA_VERSION + 1, cards: [], tickets: [] }))),
   )
 
   console.log('\n=== 6. Una foto que falta en disco no rompe la copia ===')

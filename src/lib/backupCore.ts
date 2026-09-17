@@ -19,7 +19,7 @@ export { SCHEMA_VERSION }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type LudokDb = BaseSQLiteDatabase<any, any, any>
 
-const APP_ID = 'ludovis'
+const APP_ID = 'ludok-wallet'
 
 export const DEFAULT_SETTINGS: Settings = {
   id: 'app',
@@ -162,7 +162,7 @@ export async function importAll(database: LudokDb, raw: string): Promise<ImportR
     throw new Error('El fichero no es un JSON válido.')
   }
   if (!isBackupFile(parsed)) {
-    throw new Error('Este fichero no es una copia de Ludovis.')
+    throw new Error('Este fichero no es una copia de Ludok Wallet.')
   }
   if (parsed.schemaVersion > SCHEMA_VERSION) {
     throw new Error(
