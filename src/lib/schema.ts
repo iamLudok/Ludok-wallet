@@ -1,7 +1,7 @@
 // Definición de tablas para Drizzle. Solo describe las columnas: las tablas y
 // los índices se crean con SQL explícito en `db.ts` (migraciones por
 // PRAGMA user_version).
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
 import type { CardType, CodeFormat } from '../types'
 
 export const cards = sqliteTable('cards', {
@@ -10,14 +10,21 @@ export const cards = sqliteTable('cards', {
   type: text('type').$type<CardType>().notNull().default('other'),
   photo: text('photo'),
   photoBack: text('photoBack'),
-  phone: text('phone'),
-  phone2: text('phone2'),
+  /** Lista de teléfonos serializada como JSON. Ver `rows.ts`. */
+  phones: text('phones'),
   email: text('email'),
-  address: text('address'),
+  /** Lista de direcciones serializada como JSON. Ver `rows.ts`. */
+  addresses: text('addresses'),
+  country: text('country'),
   website: text('website'),
   social: text('social'),
   /** Lista de etiquetas serializada como JSON. Ver `rows.ts`. */
   tags: text('tags'),
+  /** Posición en el orden manual de la lista. Ver `types.ts`. */
+  sortOrder: integer('sortOrder').notNull().default(0),
+  /** Coordenadas para el mapa, en caché una vez geocodificadas. */
+  lat: real('lat'),
+  lng: real('lng'),
   addedAt: integer('addedAt').notNull(),
   updatedAt: integer('updatedAt').notNull(),
 })

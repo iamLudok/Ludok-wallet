@@ -52,8 +52,9 @@ function sampleCard(overrides: Partial<Card> = {}): Card {
     type: 'restaurant',
     photo: 'foto-anverso.jpg',
     photoBack: 'foto-reverso.jpg',
-    phone: '600123456',
+    phones: ['600123456'],
     tags: ['favorito', 'vip'],
+    sortOrder: 0,
     addedAt: 1_700_000_000_000,
     updatedAt: 1_700_000_000_000,
     ...overrides,
@@ -164,6 +165,44 @@ async function main() {
   await importAll(db, raw) // la copia de la sección 2, que no menciona 'vieja.jpg'
   check('la foto de la tarjeta reemplazada se ha podado', !pruneFiles.has('vieja.jpg'))
   check('las fotos de la copia importada siguen ahí', pruneFiles.has('foto-anverso.jpg'))
+
+  console.log('\n=== 8. Importar una copia de antes de la v2 migra phone/phone2/address y «hotel» ===')
+  db = await freshDb()
+  useMemoryImageStore()
+  const legacyRaw = JSON.stringify({
+    app: 'ludok-wallet',
+    schemaVersion: 1,
+    exportedAt: 1_700_000_000_000,
+    cards: [
+      {
+        id: 'legacy-1',
+        name: 'Hotel Antiguo',
+        type: 'hotel',
+        phone: '944111222',
+        phone2: '600333444',
+        address: 'Gran Vía 1, 48001 Bilbao',
+        addedAt: 1,
+        updatedAt: 1,
+      },
+      {
+        id: 'legacy-2',
+        name: 'Bar Antiguo',
+        type: 'other',
+        addedAt: 1,
+        updatedAt: 1,
+      },
+    ],
+    tickets: [],
+    settings: null,
+  })
+  await importAll(db, legacyRaw)
+  const legacy = await exportAll(db)
+  const legacyByName = new Map(legacy.cards.map((c) => [c.name, c]))
+  eq('el tipo «hotel» se migra a «lodging»', legacyByName.get('Hotel Antiguo')?.type, 'lodging')
+  eq('los dos teléfonos se juntan en la lista', legacyByName.get('Hotel Antiguo')?.phones?.join(','), '944111222,600333444')
+  eq('la dirección pasa a lista de una', legacyByName.get('Hotel Antiguo')?.addresses?.join(','), 'Gran Vía 1, 48001 Bilbao')
+  eq('sin sortOrder en la copia: se asigna por nombre — «Bar» va antes', legacyByName.get('Bar Antiguo')?.sortOrder, 0)
+  eq('y «Hotel» detrás', legacyByName.get('Hotel Antiguo')?.sortOrder, 1)
 
   cleanup()
   console.log(failures === 0 ? '\n✔ verify:data — todo correcto' : `\n✘ verify:data — ${failures} fallo(s)`)

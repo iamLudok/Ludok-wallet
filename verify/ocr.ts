@@ -21,30 +21,34 @@ function main() {
       'RESTAURANTE EL RINCÓN',
       'Calle Mayor 12, 48005 Bilbao',
       'Tel: 944 123 456',
+      'Móvil: 611 222 333',
       'info@elrincon.com',
       'www.elrincon.com',
       '@elrincon_bilbao',
     ].join('\n'),
   )
-  eq('teléfono', card1.phone, '944 123 456')
+  eq('los dos teléfonos, no solo el primero', card1.phones.join(','), '944 123 456,611 222 333')
   eq('email', card1.email, 'info@elrincon.com')
-  eq('dirección', card1.address, 'Calle Mayor 12, 48005 Bilbao')
+  eq('dirección', card1.addresses.join(','), 'Calle Mayor 12, 48005 Bilbao')
   eq('web (no se confunde con el email)', card1.website, 'www.elrincon.com')
   eq('instagram', card1.social, '@elrincon_bilbao')
 
   console.log('\n=== 2. Tarjeta: sin nada reconocible ===')
   const card2 = parseCardOcr('Hola\nqué tal\nnada de esto vale')
-  check('sin teléfono', card2.phone === undefined)
+  check('sin teléfonos', card2.phones.length === 0)
   check('sin email', card2.email === undefined)
-  check('sin dirección', card2.address === undefined)
+  check('sin direcciones', card2.addresses.length === 0)
 
   console.log('\n=== 3. Tarjeta: un teléfono demasiado corto no cuenta ===')
   const card3 = parseCardOcr('código 12345')
-  check('cinco dígitos no es teléfono', card3.phone === undefined)
+  check('cinco dígitos no es teléfono', card3.phones.length === 0)
 
-  console.log('\n=== 4. mergeCardOcr da prioridad al primero ===')
-  const merged = mergeCardOcr({ phone: '111', rawText: 'a' }, { phone: '222', email: 'x@x.com', rawText: 'b' })
-  eq('el teléfono del primero gana', merged.phone, '111')
+  console.log('\n=== 4. mergeCardOcr junta las listas del anverso y el reverso ===')
+  const merged = mergeCardOcr(
+    { phones: ['111'], addresses: [], rawText: 'a' },
+    { phones: ['111', '222'], addresses: [], email: 'x@x.com', rawText: 'b' },
+  )
+  eq('teléfonos unidos y sin repetir', merged.phones.join(','), '111,222')
   eq('el email del segundo se cuela porque el primero no lo tenía', merged.email, 'x@x.com')
   eq('el texto bruto se concatena', merged.rawText, 'a\nb')
 

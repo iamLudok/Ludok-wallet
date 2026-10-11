@@ -11,19 +11,29 @@
 /* --- Tarjetas ---------------------------------------------------------------- */
 
 export interface OcrCardResult {
-  phone?: string
-  address?: string
+  /**
+   * Todos los teléfonos que aparecen en el texto, no solo el primero: una
+   * tarjeta suele llevar el fijo y el móvil, y antes se descartaba el segundo.
+   */
+  phones: string[]
+  /** Todas las líneas que parecen una dirección. */
+  addresses: string[]
   website?: string
   email?: string
   social?: string
   rawText: string
 }
 
-/** Fusiona dos resultados (anverso + reverso), dando prioridad al primero. */
+/** Une dos listas sin duplicados, preservando el orden (la primera antes). */
+function mergeLists(a: string[], b: string[]): string[] {
+  return [...new Set([...a, ...b])]
+}
+
+/** Fusiona dos resultados (anverso + reverso): las listas se juntan, el resto da prioridad al primero. */
 export function mergeCardOcr(a: OcrCardResult, b: OcrCardResult): OcrCardResult {
   return {
-    phone: a.phone ?? b.phone,
-    address: a.address ?? b.address,
+    phones: mergeLists(a.phones, b.phones),
+    addresses: mergeLists(a.addresses, b.addresses),
     website: a.website ?? b.website,
     email: a.email ?? b.email,
     social: a.social ?? b.social,
@@ -48,8 +58,8 @@ export function parseCardOcr(text: string): OcrCardResult {
     .map((l) => l.trim())
     .filter((l) => l.length > 0)
 
-  let phone: string | undefined
-  let address: string | undefined
+  const phones: string[] = []
+  const addresses: string[] = []
   let website: string | undefined
   let email: string | undefined
   let social: string | undefined
@@ -74,12 +84,12 @@ export function parseCardOcr(text: string): OcrCardResult {
       }
     }
 
-    if (!phone) {
-      const m = PHONE_RE.exec(line)
-      if (m) {
-        const candidate = m[1].replace(/\s+/g, ' ').trim()
-        if (candidate.replace(/\D/g, '').length >= 7) phone = candidate
-      }
+    // Todos los que aparezcan, no solo el primero: una tarjeta con fijo y
+    // móvil los lleva en líneas distintas.
+    const pm = PHONE_RE.exec(line)
+    if (pm) {
+      const candidate = pm[1].replace(/\s+/g, ' ').trim()
+      if (candidate.replace(/\D/g, '').length >= 7) phones.push(candidate)
     }
 
     // Por línea, no por si YA se encontró un email en OTRA línea: si no, un
@@ -95,12 +105,12 @@ export function parseCardOcr(text: string): OcrCardResult {
       }
     }
 
-    if (!address && (ADDRESS_RE.test(line) || ZIP_RE.test(line))) {
-      address = line
+    if (ADDRESS_RE.test(line) || ZIP_RE.test(line)) {
+      addresses.push(line)
     }
   }
 
-  return { phone, address, website, email, social, rawText: text }
+  return { phones: [...new Set(phones)], addresses: [...new Set(addresses)], website, email, social, rawText: text }
 }
 
 /* --- Entradas ---------------------------------------------------------------- */

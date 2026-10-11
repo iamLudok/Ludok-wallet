@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { Stack, useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { View, ActivityIndicator, AppState } from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useShareIntent } from 'expo-share-intent'
 // Importar `db` crea el esquema de forma síncrona: para cuando esto se
@@ -24,11 +25,16 @@ import { space } from '../src/ui/theme'
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <Shell />
-      </ThemeProvider>
-    </SafeAreaProvider>
+    // Necesario para que funcionen los gestos de react-native-gesture-handler
+    // (arrastrar una tarjeta para reordenarla): sin este envoltorio en la
+    // raíz, los gestos no se registran y arrastrar no hace nada.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <Shell />
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   )
 }
 

@@ -1,7 +1,7 @@
 // Altas/bajas/ediciones de tarjetas y entradas. Pura lógica de negocio: pide la
 // base a `dbRef` y las fotos a `imageRef`, así que se puede ejecutar y probar
 // en el escritorio igual que en el móvil.
-import { eq } from 'drizzle-orm'
+import { eq, max } from 'drizzle-orm'
 import { getDb } from './dbRef'
 import { getImageStore } from './imageRef'
 import { newId } from './ids'
@@ -16,10 +16,10 @@ export interface CardInput {
   type: CardType
   photo?: string
   photoBack?: string
-  phone?: string
-  phone2?: string
+  phones?: string[]
   email?: string
-  address?: string
+  addresses?: string[]
+  country?: string
   website?: string
   social?: string
   tags?: string[]
@@ -30,19 +30,57 @@ export async function getCard(id: string): Promise<Card | undefined> {
   return rows[0] ? rowToCard(rows[0]) : undefined
 }
 
+/** Recorta, quita huecos y deduplica una lista (teléfonos, direcciones…), preservando el orden. */
+function cleanList(list: string[] | undefined): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const raw of list ?? []) {
+    const v = raw.trim()
+    if (!v || seen.has(v)) continue
+    seen.add(v)
+    out.push(v)
+  }
+  return out
+}
+
 /**
- * Crea o actualiza una tarjeta. Las etiquetas se normalizan y se deduplican
- * aquí, no en la interfaz: es la regla de negocio, y así cualquier punto de
- * entrada (formulario, una futura importación) la respeta igual.
+ * Email y web en minúsculas siempre: son valores técnicos (un dominio no
+ * distingue mayúsculas) y escritos a mano —o pegados— acaban mezclados, lo que
+ * antes daba duplicados que en realidad eran la misma tarjeta.
+ */
+function lower(v: string | undefined): string | undefined {
+  const t = v?.trim().toLowerCase()
+  return t ? t : undefined
+}
+
+/**
+ * Crea o actualiza una tarjeta. Las etiquetas, teléfonos, direcciones, email y
+ * web se normalizan aquí, no en la interfaz: es la regla de negocio, y así
+ * cualquier punto de entrada (formulario, una futura importación) la respeta
+ * igual.
  */
 export async function saveCard(input: CardInput, id?: string): Promise<string> {
   const now = Date.now()
   const tags = [...new Set((input.tags ?? []).map(normalizeTag).filter(Boolean))]
+  const phones = cleanList(input.phones)
+  const addresses = cleanList(input.addresses)
+  const email = lower(input.email)
+  const website = lower(input.website)
 
   if (id) {
     const existing = await getCard(id)
     if (!existing) throw new Error('La tarjeta ya no existe.')
-    const card: Card = { ...existing, ...input, tags: tags.length ? tags : undefined, id, updatedAt: now }
+    const card: Card = {
+      ...existing,
+      ...input,
+      tags: tags.length ? tags : undefined,
+      phones: phones.length ? phones : undefined,
+      addresses: addresses.length ? addresses : undefined,
+      email,
+      website,
+      id,
+      updatedAt: now,
+    }
     await getDb().update(cardsTable).set(cardToRow(card)).where(eq(cardsTable.id, id))
 
     // Si el anverso o el reverso cambiaron, el fichero viejo puede quedar huérfano.
@@ -57,11 +95,45 @@ export async function saveCard(input: CardInput, id?: string): Promise<string> {
     id: newId(),
     ...input,
     tags: tags.length ? tags : undefined,
+    phones: phones.length ? phones : undefined,
+    addresses: addresses.length ? addresses : undefined,
+    email,
+    website,
+    sortOrder: await nextSortOrder(),
     addedAt: now,
     updatedAt: now,
   }
   await getDb().insert(cardsTable).values(cardToRow(card))
   return card.id
+}
+
+/** La siguiente posición libre al final del orden manual: una tarjeta nueva siempre entra la última. */
+async function nextSortOrder(): Promise<number> {
+  const rows = await getDb().select({ max: max(cardsTable.sortOrder) }).from(cardsTable)
+  return (rows[0]?.max ?? -1) + 1
+}
+
+/**
+ * Aplica el orden manual que ha dejado el modo «Ordenar» al arrastrar: cada
+ * id de la lista pasa a valer su posición (0, 1, 2…). Va en una única
+ * transacción para que una tarjeta borrada a la vez —caso raro pero
+ * posible— no deje el resto a medio numerar.
+ */
+export async function reorderCards(orderedIds: string[]): Promise<void> {
+  await getDb().transaction(async (tx) => {
+    for (const [index, id] of orderedIds.entries()) {
+      await tx.update(cardsTable).set({ sortOrder: index }).where(eq(cardsTable.id, id))
+    }
+  })
+}
+
+/**
+ * Guarda las coordenadas ya geocodificadas de una tarjeta, para no tener que
+ * volver a pedirlas la próxima vez que se abra el mapa. No es una edición del
+ * usuario —no toca `updatedAt`— sino una caché interna.
+ */
+export async function setCardCoords(id: string, lat: number, lng: number): Promise<void> {
+  await getDb().update(cardsTable).set({ lat, lng }).where(eq(cardsTable.id, id))
 }
 
 /**

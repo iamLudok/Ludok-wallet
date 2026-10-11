@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Pressable, View, ScrollView, StyleSheet, Alert, ActivityIndicator, useWindowDimensions } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { Image } from 'expo-image'
+import { Image, type ImageLoadEventData } from 'expo-image'
 import * as Brightness from 'expo-brightness'
 import { Screen } from '../../src/ui/Screen'
 import { Txt } from '../../src/ui/Text'
@@ -56,11 +56,25 @@ export default function EntradaDetailScreen() {
   )
 }
 
+// Límites para la forma de la previsualización: sin esto, una captura casi
+// cuadrada o un panorámico raro podrían dejar una caja absurda.
+const MIN_IMAGE_RATIO = 0.45
+const MAX_IMAGE_RATIO = 2.2
+
 function DetailView({ ticket, onEdit, onDeleted }: { ticket: Ticket; onEdit: () => void; onDeleted: () => void }) {
   const palette = usePalette()
   const { width, height } = useWindowDimensions()
   const [fullscreen, setFullscreen] = useState(false)
   const original = useRef<number | null>(null)
+  // La imagen de la entrada suele ser una captura vertical de móvil: con una
+  // caja apaisada fija se veía diminuta, encogida en el centro. En cuanto se
+  // conoce su tamaño real, la caja adopta esa forma en vez de una altura fija.
+  const [imageRatio, setImageRatio] = useState<number | undefined>()
+  const onImageLoad = ({ source }: ImageLoadEventData) => {
+    if (source.width > 0 && source.height > 0) {
+      setImageRatio(Math.min(MAX_IMAGE_RATIO, Math.max(MIN_IMAGE_RATIO, source.width / source.height)))
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -137,8 +151,9 @@ function DetailView({ ticket, onEdit, onDeleted }: { ticket: Ticket; onEdit: () 
         {ticket.image ? (
           <Image
             source={{ uri: imageUri(ticket.image) }}
-            style={styles.ticketImage}
+            style={[styles.ticketImage, imageRatio ? { aspectRatio: imageRatio, height: undefined } : null]}
             contentFit="contain"
+            onLoad={onImageLoad}
           />
         ) : null}
 

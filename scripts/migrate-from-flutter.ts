@@ -97,6 +97,12 @@ function n(v: string | null | undefined): string | undefined {
   return t ? t : undefined
 }
 
+/** Junta valores sueltos (los dos teléfonos, por ejemplo) en la lista que espera esta app, o `undefined` si no queda ninguno. */
+function list(...values: (string | undefined)[]): string[] | undefined {
+  const filled = values.filter((v): v is string => !!v)
+  return filled.length ? filled : undefined
+}
+
 function parseTags(raw: string): string[] | undefined {
   const tags = raw
     .split(',')
@@ -147,9 +153,11 @@ async function main() {
   const restaurantsRes = await client.execute('SELECT * FROM restaurants')
   const ticketsRes = await client.execute('SELECT * FROM tickets')
 
-  const cards: Card[] = restaurantsRes.rows.map((r) => {
+  const cards: Card[] = restaurantsRes.rows.map((r, index) => {
     const row = r as unknown as OldRestaurantRow
-    const type = CARD_TYPES.includes(row.card_type) ? (row.card_type as CardType) : 'other'
+    const rawType = CARD_TYPES.includes(row.card_type) ? row.card_type : 'other'
+    // «hotel» pasó a llamarse «lodging» (etiqueta «Alojamiento») en esta app.
+    const type: CardType = rawType === 'hotel' ? 'lodging' : (rawType as CardType)
     const addedAt = secondsToMs(row.created_at) ?? Date.now()
     const card: Card = {
       id: newId(),
@@ -157,13 +165,15 @@ async function main() {
       type,
       photo: resolveImage(row.photo_path),
       photoBack: resolveImage(row.photo_back_path),
-      phone: n(row.phone),
-      phone2: n(row.phone2),
+      phones: list(n(row.phone), n(row.phone2)),
       email: n(row.email),
-      address: n(row.address),
+      addresses: list(n(row.address)),
       website: n(row.website),
       social: n(row.social_link),
       tags: parseTags(row.tags),
+      // El orden que ya traía la base vieja (por fila) sirve de orden manual
+      // inicial; se puede reordenar a mano en la app en cuanto se importe.
+      sortOrder: index,
       addedAt,
       updatedAt: addedAt,
     }

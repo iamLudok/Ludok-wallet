@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ScrollView, View, StyleSheet, Alert } from 'react-native'
+import { ScrollView, View, StyleSheet, Alert, KeyboardAvoidingView } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker'
 import { scanFromURLAsync } from 'expo-camera'
@@ -220,6 +220,14 @@ export default function EntradaFormularioScreen() {
   return (
     <Screen padded={false}>
       <TopBar title={id ? 'Editar entrada' : 'Nueva entrada'} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        // «adjustResize» del manifest ya no basta: con edge-to-edge obligatorio
+        // desde Android 15, la ventana no se redimensiona sola y el teclado se
+        // queda tapando el campo. `behavior="height"` no depende de eso:
+        // escucha el evento nativo del teclado y encoge esta vista él solo.
+        behavior="height"
+      >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Field value={title} onChangeText={setTitle} placeholder="Título del evento *" />
         <Field value={venue} onChangeText={setVenue} placeholder="Lugar" />
@@ -264,8 +272,17 @@ export default function EntradaFormularioScreen() {
         <PhotoSlot
           label="Captura o foto"
           uri={imgUri}
-          onChange={(uri) => { setImgUri(uri); setImgIsNew(true) }}
-          height={140}
+          onChange={(uri) => {
+            setImgUri(uri)
+            setImgIsNew(true)
+            // La foto que se sube aquí suele ser el billete en sí: se intenta
+            // leer el código de una vez, en vez de obligar a repetir el mismo
+            // paso con «Desde imagen» aparte.
+            detectCode(uri)
+          }}
+          ocrRunning={detecting}
+          onRescan={imgUri ? () => detectCode(imgUri) : undefined}
+          height={260}
         />
 
         <Field value={notes} onChangeText={setNotes} placeholder="Notas" multiline numberOfLines={2} />
@@ -277,6 +294,7 @@ export default function EntradaFormularioScreen() {
           disabled={saving}
         />
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <PhotoSourceSheet visible={sheetOpen} onClose={() => setSheetOpen(false)} onPicked={onSheetPicked} />
     </Screen>

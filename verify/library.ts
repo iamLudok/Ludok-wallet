@@ -19,6 +19,8 @@ import {
   deleteCard,
   getCard,
   allTags,
+  reorderCards,
+  setCardCoords,
   saveTicket,
   deleteTicket,
   getTicket,
@@ -66,6 +68,17 @@ async function main() {
   check('updatedAt avanza al editar', (card?.updatedAt ?? 0) > firstAddedAt)
   check('etiquetas vacías quedan ausentes, no como lista vacía', card?.tags === undefined)
 
+  console.log('\n=== 1b. Email y web se guardan siempre en minúsculas ===')
+  const idB = await saveCard({
+    name: 'Con mayúsculas',
+    type: 'other',
+    email: 'Persona@Ejemplo.COM',
+    website: 'WWW.Ejemplo.com',
+  })
+  const cardB = await getCard(idB)
+  eq('email en minúsculas', cardB?.email, 'persona@ejemplo.com')
+  eq('web en minúsculas', cardB?.website, 'www.ejemplo.com')
+
   console.log('\n=== 2. Editar una tarjeta reemplazando la foto borra la vieja ===')
   files.set('vieja.jpg', 'AAAA')
   await saveCard({ name: 'Con foto', type: 'other', photo: 'vieja.jpg' }, id)
@@ -91,6 +104,32 @@ async function main() {
   await saveCard({ name: 'Uno', type: 'other', tags: ['ocio', 'cerca'] })
   await saveCard({ name: 'Dos', type: 'other', tags: ['cerca', 'trabajo'] })
   eq('etiquetas únicas y ordenadas', (await allTags()).join(','), 'cerca,ocio,trabajo')
+
+  console.log('\n=== 5b. Orden manual: nueva tarjeta va al final, y se puede reordenar ===')
+  files = await useFreshDb()
+  const orderA = await saveCard({ name: 'A', type: 'other' })
+  const orderB = await saveCard({ name: 'B', type: 'other' })
+  const orderC = await saveCard({ name: 'C', type: 'other' })
+  eq('la primera entra en 0', (await getCard(orderA))?.sortOrder, 0)
+  eq('la segunda en 1', (await getCard(orderB))?.sortOrder, 1)
+  eq('la tercera en 2', (await getCard(orderC))?.sortOrder, 2)
+
+  await reorderCards([orderC, orderA, orderB])
+  eq('C pasa a 0', (await getCard(orderC))?.sortOrder, 0)
+  eq('A pasa a 1', (await getCard(orderA))?.sortOrder, 1)
+  eq('B pasa a 2', (await getCard(orderB))?.sortOrder, 2)
+
+  const orderD = await saveCard({ name: 'D', type: 'other' })
+  eq('una tarjeta nueva entra detrás de la última, no en 0', (await getCard(orderD))?.sortOrder, 3)
+
+  console.log('\n=== 5c. setCardCoords guarda la caché del mapa sin tocar updatedAt ===')
+  const beforeCoords = await getCard(orderA)
+  await new Promise((r) => setTimeout(r, 5))
+  await setCardCoords(orderA, 43.26, -2.94)
+  const afterCoords = await getCard(orderA)
+  eq('latitud guardada', afterCoords?.lat, 43.26)
+  eq('longitud guardada', afterCoords?.lng, -2.94)
+  eq('updatedAt no cambia: es caché, no una edición', afterCoords?.updatedAt, beforeCoords?.updatedAt)
 
   console.log('\n=== 6. saveTicket crea y actualiza ===')
   files = await useFreshDb()

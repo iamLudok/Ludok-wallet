@@ -52,3 +52,7 @@ yarn-error.*
 .DS_Store
 *.suo
 *.sw?
+
+# instrucciones locales para agentes de IA
+AGENTS.md
+CLAUDE.md

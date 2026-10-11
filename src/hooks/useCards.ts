@@ -5,10 +5,10 @@ import { cards as cardsTable } from '../lib/schema'
 import { rowToCard } from '../lib/rows'
 import type { Card } from '../types'
 
-/** Todas las tarjetas, reactivo. Ordenadas por nombre, como en la lista. */
+/** Todas las tarjetas, reactivo. En el orden manual («Ordenar» en la lista). */
 export function useCards(): { data: Card[]; ready: boolean } {
   const { data, updatedAt } = useLiveQuery(
-    db.select().from(cardsTable).orderBy(cardsTable.name),
+    db.select().from(cardsTable).orderBy(cardsTable.sortOrder),
   )
   return { data: (data ?? []).map(rowToCard), ready: updatedAt !== undefined }
 }

@@ -24,13 +24,16 @@ export function rowToCard(r: CardRow): Card {
     type: r.type,
     photo: u(r.photo),
     photoBack: u(r.photoBack),
-    phone: u(r.phone),
-    phone2: u(r.phone2),
+    phones: parseStringList(r.phones),
     email: u(r.email),
-    address: u(r.address),
+    addresses: parseStringList(r.addresses),
+    country: u(r.country),
     website: u(r.website),
     social: u(r.social),
-    tags: parseTags(r.tags),
+    tags: parseStringList(r.tags),
+    sortOrder: r.sortOrder,
+    lat: u(r.lat),
+    lng: u(r.lng),
     addedAt: r.addedAt,
     updatedAt: r.updatedAt,
   }
@@ -43,13 +46,16 @@ export function cardToRow(c: Card): CardRow {
     type: c.type,
     photo: n(c.photo),
     photoBack: n(c.photoBack),
-    phone: n(c.phone),
-    phone2: n(c.phone2),
+    phones: serializeStringList(c.phones),
     email: n(c.email),
-    address: n(c.address),
+    addresses: serializeStringList(c.addresses),
+    country: n(c.country),
     website: n(c.website),
     social: n(c.social),
-    tags: serializeTags(c.tags),
+    tags: serializeStringList(c.tags),
+    sortOrder: c.sortOrder,
+    lat: n(c.lat),
+    lng: n(c.lng),
     addedAt: c.addedAt,
     updatedAt: c.updatedAt,
   }
@@ -105,9 +111,10 @@ export function rowToSettings(r: SettingsRow): Settings {
 /**
  * Texto de la columna → lista. Devuelve `undefined` cuando no hay nada, para
  * que el campo simplemente no aparezca en el JSON de la copia en vez de salir
- * como `null` o como lista vacía.
+ * como `null` o como lista vacía. La usan las etiquetas, los teléfonos y las
+ * direcciones: cualquier campo que en la ficha es «uno o varios».
  */
-export function parseTags(raw: string | null | undefined): string[] | undefined {
+export function parseStringList(raw: string | null | undefined): string[] | undefined {
   if (!raw) return undefined
   try {
     const parsed: unknown = JSON.parse(raw)
@@ -120,7 +127,7 @@ export function parseTags(raw: string | null | undefined): string[] | undefined 
 }
 
 /** Lista → texto de la columna (null si está vacía). */
-export function serializeTags(list: string[] | undefined): string | null {
+export function serializeStringList(list: string[] | undefined): string | null {
   if (!list || list.length === 0) return null
   return JSON.stringify(list)
 }

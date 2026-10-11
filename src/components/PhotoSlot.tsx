@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { View, Pressable, ActivityIndicator, StyleSheet } from 'react-native'
-import { Image } from 'expo-image'
+import { Image, type ImageLoadEventData } from 'expo-image'
 import { usePalette } from '../ui/ThemeProvider'
 import { Txt } from '../ui/Text'
 import { radius, space } from '../ui/theme'
@@ -18,10 +18,33 @@ interface Props {
   height?: number
 }
 
-/** Hueco para una foto: toca para elegirla, con una miniatura si ya hay una. */
+// Límites para la forma del hueco una vez se conoce la foto real: sin esto,
+// una captura casi cuadrada o un panorámico raro podrían dejar una caja
+// absurdamente alta o plana. Dentro de ese rango, se deja tal cual.
+const MIN_RATIO = 0.45
+const MAX_RATIO = 2.2
+
+/**
+ * Hueco para una foto: toca para elegirla, con una miniatura si ya hay una.
+ *
+ * En cuanto se conoce el tamaño real de la foto, el hueco adopta SU forma
+ * (con el mismo ancho de siempre) en vez de la altura fija de `height`. Antes
+ * era siempre una caja apaisada pensada para una tarjeta de visita, y una
+ * foto vertical —una entrada, un carné— se veía diminuta en el centro o
+ * recortada por los lados.
+ */
 export function PhotoSlot({ label, uri, onChange, ocrRunning, onRescan, height = 130 }: Props) {
   const palette = usePalette()
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [ratio, setRatio] = useState<number | undefined>()
+
+  const onLoad = ({ source }: ImageLoadEventData) => {
+    if (source.width > 0 && source.height > 0) {
+      setRatio(Math.min(MAX_RATIO, Math.max(MIN_RATIO, source.width / source.height)))
+    }
+  }
+
+  const boxStyle = uri && ratio ? { aspectRatio: ratio } : { height }
 
   return (
     <View style={styles.wrap}>
@@ -30,13 +53,13 @@ export function PhotoSlot({ label, uri, onChange, ocrRunning, onRescan, height =
       </Txt>
       <Pressable
         onPress={() => setPickerOpen(true)}
-        style={[styles.box, { height, backgroundColor: palette.surface2 }]}
+        style={[styles.box, boxStyle, { backgroundColor: palette.surface2 }]}
       >
         {ocrRunning ? (
           <ActivityIndicator color={palette.muted} />
         ) : uri ? (
           <>
-            <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+            <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="contain" onLoad={onLoad} />
             <View style={styles.overlayRow}>
               {onRescan && (
                 <Pressable

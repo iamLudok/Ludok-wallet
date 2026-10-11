@@ -59,6 +59,60 @@ async function main() {
   check('las consultas con los índices no fallan', true)
 
   for (const s of ['', '-wal', '-shm']) rmSync(path + s, { force: true })
+
+  console.log('\n=== 6. v1 → v4: teléfonos/dirección a listas, «hotel» a «lodging», orden manual y columnas del mapa ===')
+  const oldPath = join(tmpdir(), `ludok-wallet-migration-old-${process.pid}.db`)
+  rmSync(oldPath, { force: true })
+  const oldClient = createClient({ url: `file:${oldPath}` })
+  // El esquema tal cual quedaba en v1, antes de este cambio: sin las columnas nuevas.
+  await oldClient.executeMultiple(`
+    CREATE TABLE cards (
+      id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL DEFAULT 'other',
+      photo TEXT,
+      photoBack TEXT,
+      phone TEXT,
+      phone2 TEXT,
+      email TEXT,
+      address TEXT,
+      website TEXT,
+      social TEXT,
+      tags TEXT,
+      addedAt INTEGER NOT NULL,
+      updatedAt INTEGER NOT NULL
+    );
+  `)
+  await oldClient.execute(
+    `INSERT INTO cards (id, name, type, phone, phone2, address, addedAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    ['c1', 'Hotel Ejemplo', 'hotel', '944111222', '600333444', 'Gran Vía 1, 48001 Bilbao', 1, 1],
+  )
+  await oldClient.execute(
+    `INSERT INTO cards (id, name, type, addedAt, updatedAt) VALUES (?, ?, ?, ?, ?)`,
+    ['c2', 'Sin datos de contacto', 'other', 1, 1],
+  )
+  await oldClient.execute(`PRAGMA user_version = 1`)
+
+  for (const step of MIGRATIONS) await oldClient.executeMultiple(step)
+  await oldClient.execute(`PRAGMA user_version = ${DB_VERSION}`)
+
+  const migrated = await oldClient.execute('SELECT id, name, type, phones, addresses, sortOrder, lat, lng FROM cards ORDER BY id')
+  const c1 = migrated.rows[0] as unknown as {
+    type: string; phones: string; addresses: string; sortOrder: number; lat: number | null; lng: number | null
+  }
+  const c2 = migrated.rows[1] as unknown as {
+    type: string; phones: string | null; addresses: string | null; sortOrder: number; lat: number | null; lng: number | null
+  }
+  eq('el tipo «hotel» pasa a «lodging»', c1.type, 'lodging')
+  eq('los dos teléfonos fijos se juntan en la lista', JSON.parse(c1.phones).join(','), '944111222,600333444')
+  eq('la dirección fija pasa a lista de una', JSON.parse(c1.addresses).join(','), 'Gran Vía 1, 48001 Bilbao')
+  check('una tarjeta sin teléfono ni dirección no gana listas vacías', c2.phones === null && c2.addresses === null)
+  eq('orden manual: «Hotel Ejemplo» va antes que «Sin datos de contacto»', c1.sortOrder, 0)
+  eq('y esta última la segunda', c2.sortOrder, 1)
+  check('lat/lng nacen vacías: las rellena el mapa, no la migración', c1.lat === null && c1.lng === null)
+
+  for (const s of ['', '-wal', '-shm']) rmSync(oldPath + s, { force: true })
+
   console.log(failures === 0 ? '\n✔ verify:migration — todo correcto' : `\n✘ verify:migration — ${failures} fallo(s)`)
   process.exit(failures === 0 ? 0 : 1)
 }

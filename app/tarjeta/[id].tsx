@@ -101,7 +101,7 @@ function DetailView({ card, onEdit, onDeleted }: { card: Card; onEdit: () => voi
           ]}
         >
           {hasFront ? (
-            <Image source={{ uri: imageUri(card.photo!) }} style={StyleSheet.absoluteFill} contentFit="cover" />
+            <Image source={{ uri: imageUri(card.photo!) }} style={StyleSheet.absoluteFill} contentFit="contain" />
           ) : (
             <Txt variant="label" tone="faint">
               {CARD_TYPE_LABELS[card.type]}
@@ -115,7 +115,7 @@ function DetailView({ card, onEdit, onDeleted }: { card: Card; onEdit: () => voi
             { backgroundColor: palette.surface2, opacity: backOpacity, transform: [{ rotateY: backRotate }] },
           ]}
         >
-          {hasBack && <Image source={{ uri: imageUri(card.photoBack!) }} style={StyleSheet.absoluteFill} contentFit="cover" />}
+          {hasBack && <Image source={{ uri: imageUri(card.photoBack!) }} style={StyleSheet.absoluteFill} contentFit="contain" />}
         </Animated.View>
         {canFlip && (
           <View style={[styles.flipHint, { backgroundColor: palette.scrim }]}>
@@ -129,6 +129,7 @@ function DetailView({ card, onEdit, onDeleted }: { card: Card; onEdit: () => voi
       <View style={styles.body}>
         <Txt variant="label" tone="muted">
           {CARD_TYPE_LABELS[card.type]}
+          {card.country ? ` · ${card.country}` : ''}
         </Txt>
         <Txt variant="display">{card.name}</Txt>
 
@@ -143,20 +144,22 @@ function DetailView({ card, onEdit, onDeleted }: { card: Card; onEdit: () => voi
         )}
 
         <View style={styles.actions}>
-          {!!card.phone && <ActionRow label={card.phone} onPress={() => Linking.openURL(`tel:${card.phone}`)} />}
-          {!!card.phone2 && <ActionRow label={card.phone2} onPress={() => Linking.openURL(`tel:${card.phone2}`)} />}
+          {card.phones?.map((phone) => (
+            <ActionRow key={phone} label={phone} onPress={() => Linking.openURL(`tel:${phone}`)} />
+          ))}
           {!!card.email && <ActionRow label={card.email} onPress={() => Linking.openURL(`mailto:${card.email}`)} />}
-          {!!card.address && (
+          {card.addresses?.map((address) => (
             <ActionRow
-              label={card.address}
+              key={address}
+              label={address}
               onPress={async () => {
-                const q = encodeURIComponent(card.address!)
+                const q = encodeURIComponent(address)
                 const geo = `geo:0,0?q=${q}`
                 const can = await Linking.canOpenURL(geo)
                 await Linking.openURL(can ? geo : `https://maps.google.com/?q=${q}`)
               }}
             />
-          )}
+          ))}
           {!!card.website && (
             <ActionRow
               label={card.website}

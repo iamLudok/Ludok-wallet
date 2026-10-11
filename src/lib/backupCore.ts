@@ -132,6 +132,39 @@ export interface ImportResult {
   images: number
 }
 
+/**
+ * Compatibilidad con una copia de antes de la v2, donde una tarjeta llevaba
+ * `phone`/`phone2`/`address` en vez de las listas `phones`/`addresses`.
+ * Sin esto, importar una copia vieja habría dejado esos datos fuera sin
+ * avisar: `cardToRow` solo lee los campos nuevos.
+ */
+function migrateLegacyCard(raw: Card & { phone?: string; phone2?: string; address?: string }): Card {
+  if (raw.phones || raw.addresses) return raw
+  const { phone, phone2, address, ...rest } = raw
+  const phones = [phone, phone2].filter((v): v is string => !!v)
+  const addresses = address ? [address] : []
+  return {
+    ...rest,
+    phones: phones.length ? phones : undefined,
+    addresses: addresses.length ? addresses : undefined,
+    type: (rest.type as string) === 'hotel' ? 'lodging' : rest.type,
+  }
+}
+
+/**
+ * Compatibilidad con una copia de antes de la v3, sin `sortOrder`: se le
+ * asigna uno por nombre, que es como se enseñaban las tarjetas antes de que
+ * existiera el orden manual. No toca nada si ya viene con `sortOrder` (una
+ * copia ya en el formato actual).
+ */
+function withSortOrder(cardsIn: Card[]): Card[] {
+  const missing = cardsIn.filter((c) => c.sortOrder === undefined)
+  if (!missing.length) return cardsIn
+  const sorted = [...missing].sort((a, b) => a.name.localeCompare(b.name))
+  const order = new Map(sorted.map((c, i) => [c.id, i]))
+  return cardsIn.map((c) => (c.sortOrder === undefined ? { ...c, sortOrder: order.get(c.id)! } : c))
+}
+
 function isBackupFile(data: unknown): data is BackupFile {
   if (typeof data !== 'object' || data === null) return false
   const d = data as Record<string, unknown>
@@ -182,7 +215,8 @@ export async function importAll(database: LudokDb, raw: string): Promise<ImportR
     await tx.delete(cardsTable)
     await tx.delete(ticketsTable)
     if (parsed.cards.length) {
-      await tx.insert(cardsTable).values(parsed.cards.map(cardToRow))
+      const cards = withSortOrder(parsed.cards.map(migrateLegacyCard))
+      await tx.insert(cardsTable).values(cards.map(cardToRow))
     }
     if (parsed.tickets.length) {
       await tx.insert(ticketsTable).values(parsed.tickets.map(ticketToRow))

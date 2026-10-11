@@ -7,7 +7,7 @@
 // una copia — que es justo lo que hacía la versión de Flutter.
 
 /** Qué es lo que hay en la tarjeta. Decide el icono y el filtro de la lista. */
-export type CardType = 'restaurant' | 'person' | 'shop' | 'hotel' | 'company' | 'other'
+export type CardType = 'vinyl' | 'restaurant' | 'person' | 'shop' | 'lodging' | 'company' | 'other'
 
 /**
  * Tarjeta guardada: un restaurante, una persona, una tienda…
@@ -24,15 +24,33 @@ export interface Card {
   photo?: string
   /** Reverso, si lo hay. La ficha se gira para verlo. */
   photoBack?: string
-  phone?: string
-  phone2?: string
+  /** Uno o varios. Ausente = ninguno. Ver `lib/rows.ts`. */
+  phones?: string[]
   email?: string
-  address?: string
+  /** Una o varias. Ausente = ninguna. Ver `lib/rows.ts`. */
+  addresses?: string[]
+  /** Libre, para filtrar tarjetas por país. */
+  country?: string
   website?: string
   /** Instagram: se admite @usuario, la URL entera o solo el nombre. */
   social?: string
   /** Etiquetas libres en minúsculas. Ausente = ninguna. Ver `lib/rows.ts`. */
   tags?: string[]
+  /**
+   * Posición en el orden manual de la lista. La asigna la propia app (al
+   * crear la tarjeta, y al arrastrarla en el modo «Ordenar»): no lo edita el
+   * usuario a mano, así que siempre tiene un valor, a diferencia del resto de
+   * campos de aquí abajo.
+   */
+  sortOrder: number
+  /**
+   * Coordenadas para el mapa, si ya se han podido calcular a partir de la
+   * primera dirección (ver `lib/geocode.ts`). Ausentes hasta que el mapa las
+   * resuelve la primera vez; luego se quedan en caché aquí para no volver a
+   * pedirlas.
+   */
+  lat?: number
+  lng?: number
   addedAt: number
   updatedAt: number
 }

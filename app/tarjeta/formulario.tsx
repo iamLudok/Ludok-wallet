@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ScrollView, View, StyleSheet, Alert } from 'react-native'
+import { ScrollView, View, StyleSheet, Alert, KeyboardAvoidingView } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import TextRecognition, { TextRecognitionScript } from '@react-native-ml-kit/text-recognition'
 import { Screen } from '../../src/ui/Screen'
@@ -10,6 +10,7 @@ import { Chips } from '../../src/ui/Chips'
 import { space } from '../../src/ui/theme'
 import { PhotoSlot } from '../../src/components/PhotoSlot'
 import { TagInput } from '../../src/components/TagInput'
+import { ListField } from '../../src/components/ListField'
 import { TopBar } from '../../src/components/TopBar'
 import { useCard } from '../../src/hooks/useCards'
 import { saveCard } from '../../src/lib/library'
@@ -29,10 +30,10 @@ export default function TarjetaFormularioScreen() {
   const [loaded, setLoaded] = useState(!id)
   const [name, setName] = useState('')
   const [type, setType] = useState<CardType>('other')
-  const [phone, setPhone] = useState('')
-  const [phone2, setPhone2] = useState('')
+  const [phones, setPhones] = useState<string[]>([])
   const [email, setEmail] = useState('')
-  const [address, setAddress] = useState('')
+  const [addresses, setAddresses] = useState<string[]>([])
+  const [country, setCountry] = useState('')
   const [website, setWebsite] = useState('')
   const [social, setSocial] = useState('')
   const [tags, setTags] = useState<string[]>([])
@@ -52,10 +53,10 @@ export default function TarjetaFormularioScreen() {
     if (loaded || !ready || !existing) return
     setName(existing.name)
     setType(existing.type)
-    setPhone(existing.phone ?? '')
-    setPhone2(existing.phone2 ?? '')
+    setPhones(existing.phones ?? [])
     setEmail(existing.email ?? '')
-    setAddress(existing.address ?? '')
+    setAddresses(existing.addresses ?? [])
+    setCountry(existing.country ?? '')
     setWebsite(existing.website ?? '')
     setSocial(existing.social ?? '')
     setTags(existing.tags ?? [])
@@ -75,7 +76,7 @@ export default function TarjetaFormularioScreen() {
     if (!uris.length) return
     setOcrRunning(true)
     try {
-      let merged: OcrCardResult = { rawText: '' }
+      let merged: OcrCardResult = { phones: [], addresses: [], rawText: '' }
       for (const uri of uris) {
         const result = await TextRecognition.recognize(uri, TextRecognitionScript.LATIN)
         merged = mergeCardOcr(merged, parseCardOcr(result.text))
@@ -88,9 +89,18 @@ export default function TarjetaFormularioScreen() {
           any = true
         }
       }
-      fill(phone, setPhone, merged.phone)
+      // Las listas se completan, no se pisan: lo que ya tenías escrito a mano
+      // se queda, y solo se añade lo que aún no estuviera.
+      const fillList = (current: string[], setter: (v: string[]) => void, found: string[]) => {
+        const nuevos = found.filter((v) => !current.includes(v))
+        if (nuevos.length) {
+          setter([...current, ...nuevos])
+          any = true
+        }
+      }
+      fillList(phones, setPhones, merged.phones)
       fill(email, setEmail, merged.email)
-      fill(address, setAddress, merged.address)
+      fillList(addresses, setAddresses, merged.addresses)
       fill(website, setWebsite, merged.website)
       fill(social, setSocial, merged.social)
       Alert.alert(
@@ -147,10 +157,10 @@ export default function TarjetaFormularioScreen() {
           type,
           photo,
           photoBack,
-          phone: phone.trim() || undefined,
-          phone2: phone2.trim() || undefined,
+          phones,
           email: email.trim() || undefined,
-          address: address.trim() || undefined,
+          addresses,
+          country: country.trim() || undefined,
           website: website.trim() || undefined,
           social: social.trim() || undefined,
           tags,
@@ -167,6 +177,14 @@ export default function TarjetaFormularioScreen() {
   return (
     <Screen padded={false}>
       <TopBar title={id ? 'Editar tarjeta' : 'Nueva tarjeta'} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        // «adjustResize» del manifest ya no basta: con edge-to-edge obligatorio
+        // desde Android 15, la ventana no se redimensiona sola y el teclado se
+        // queda tapando el campo. `behavior="height"` no depende de eso:
+        // escucha el evento nativo del teclado y encoge esta vista él solo.
+        behavior="height"
+      >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Txt variant="label" tone="muted">
           Tipo
@@ -195,8 +213,18 @@ export default function TarjetaFormularioScreen() {
         </View>
 
         <Field value={name} onChangeText={setName} placeholder="Nombre *" />
-        <Field value={phone} onChangeText={setPhone} placeholder="Teléfono 1" keyboardType="phone-pad" />
-        <Field value={phone2} onChangeText={setPhone2} placeholder="Teléfono 2" keyboardType="phone-pad" />
+
+        <Txt variant="label" tone="muted">
+          Teléfonos
+        </Txt>
+        <ListField
+          values={phones}
+          onChange={setPhones}
+          placeholder="Añadir teléfono"
+          addLabel="Añadir"
+          keyboardType="phone-pad"
+        />
+
         <Field
           value={email}
           onChangeText={setEmail}
@@ -204,7 +232,13 @@ export default function TarjetaFormularioScreen() {
           keyboardType="email-address"
           autoCapitalize="none"
         />
-        <Field value={address} onChangeText={setAddress} placeholder="Dirección" />
+
+        <Txt variant="label" tone="muted">
+          Direcciones
+        </Txt>
+        <ListField values={addresses} onChange={setAddresses} placeholder="Añadir dirección" addLabel="Añadir" />
+
+        <Field value={country} onChangeText={setCountry} placeholder="País" />
         <Field
           value={website}
           onChangeText={setWebsite}
@@ -231,6 +265,7 @@ export default function TarjetaFormularioScreen() {
           disabled={saving}
         />
       </ScrollView>
+      </KeyboardAvoidingView>
     </Screen>
   )
 }
