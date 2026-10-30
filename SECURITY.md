@@ -29,13 +29,13 @@ prefer to stay anonymous.
 In scope:
 
 - Leaks of the Nextcloud credentials stored by the app (for example, the password ending up in an exported backup or in logs)
-- Personal data sent anywhere other than what the README describes (Nominatim and OpenStreetMap tiles for the map, your own Nextcloud)
+- Personal data sent anywhere other than what the README describes (only your own Nextcloud)
 - Importing a crafted backup file, image, PDF or shared file that corrupts data, crashes the app or writes files outside the app's folder
 - Data stored outside the app's private storage without the user asking for it
 
 Out of scope:
 
-- Vulnerabilities in Android, Expo, ML Kit, Leaflet, Nextcloud or other third-party software (report those upstream)
+- Vulnerabilities in Android, Expo, ML Kit, Nextcloud or other third-party software (report those upstream)
 - Problems that require root access or physical access to an unlocked phone
 - APKs not downloaded from this repository's Releases page
 
@@ -45,4 +45,3 @@ Out of scope:
 - **Use a Nextcloud app password**, not your account password, so you can revoke it at any time.
 - **Don't send Nextcloud traffic over plain HTTP outside your home network.** The app allows `http://` for local servers; use HTTPS or a VPN when your server is reachable from the internet.
 - **Treat backup files as sensitive.** They don't contain your Nextcloud password, but they do contain every card, photo and ticket code. Anyone with a ticket's code can use it.
-- **Know what the map sends.** Opening the cards map sends the addresses of cards without coordinates to Nominatim (OpenStreetMap). If you don't want that, don't open the map.
