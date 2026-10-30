@@ -62,14 +62,14 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="entradas"
+        name="index"
         options={{
           title: 'Entradas',
           tabBarIcon: ({ color }) => <Icon shape="tickets" color={color} bg={palette.bg} />,
         }}
       />
       <Tabs.Screen
-        name="index"
+        name="tarjetas"
         options={{
           title: 'Tarjetas',
           tabBarIcon: ({ color }) => <Icon shape="cards" color={color} bg={palette.bg} />,
