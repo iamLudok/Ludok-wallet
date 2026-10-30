@@ -60,7 +60,7 @@ async function main() {
 
   for (const s of ['', '-wal', '-shm']) rmSync(path + s, { force: true })
 
-  console.log('\n=== 6. v1 → v4: teléfonos/dirección a listas, «hotel» a «lodging», orden manual y columnas del mapa ===')
+  console.log('\n=== 6. v1 → v5: teléfonos/dirección a listas, «hotel» a «lodging», orden manual y coordenadas del mapa borradas ===')
   const oldPath = join(tmpdir(), `ludok-wallet-migration-old-${process.pid}.db`)
   rmSync(oldPath, { force: true })
   const oldClient = createClient({ url: `file:${oldPath}` })
@@ -93,7 +93,10 @@ async function main() {
   )
   await oldClient.execute(`PRAGMA user_version = 1`)
 
-  for (const step of MIGRATIONS) await oldClient.executeMultiple(step)
+  // Hasta v4, y ahí se simula lo que hacía el mapa: guardar coordenadas.
+  for (const step of MIGRATIONS.slice(0, 3)) await oldClient.executeMultiple(step)
+  await oldClient.execute(`UPDATE cards SET lat = 43.26, lng = -2.94 WHERE id = 'c1'`)
+  for (const step of MIGRATIONS.slice(3)) await oldClient.executeMultiple(step)
   await oldClient.execute(`PRAGMA user_version = ${DB_VERSION}`)
 
   const migrated = await oldClient.execute('SELECT id, name, type, phones, addresses, sortOrder, lat, lng FROM cards ORDER BY id')
@@ -109,7 +112,7 @@ async function main() {
   check('una tarjeta sin teléfono ni dirección no gana listas vacías', c2.phones === null && c2.addresses === null)
   eq('orden manual: «Hotel Ejemplo» va antes que «Sin datos de contacto»', c1.sortOrder, 0)
   eq('y esta última la segunda', c2.sortOrder, 1)
-  check('lat/lng nacen vacías: las rellena el mapa, no la migración', c1.lat === null && c1.lng === null)
+  check('v5 borra las coordenadas que guardó el mapa (ya quitado)', c1.lat === null && c1.lng === null)
 
   for (const s of ['', '-wal', '-shm']) rmSync(oldPath + s, { force: true })
 

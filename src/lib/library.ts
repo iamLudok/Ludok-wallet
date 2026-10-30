@@ -128,15 +128,6 @@ export async function reorderCards(orderedIds: string[]): Promise<void> {
 }
 
 /**
- * Guarda las coordenadas ya geocodificadas de una tarjeta, para no tener que
- * volver a pedirlas la próxima vez que se abra el mapa. No es una edición del
- * usuario —no toca `updatedAt`— sino una caché interna.
- */
-export async function setCardCoords(id: string, lat: number, lng: number): Promise<void> {
-  await getDb().update(cardsTable).set({ lat, lng }).where(eq(cardsTable.id, id))
-}
-
-/**
  * Borra la tarjeta y, si sus fotos ya no las usa nada más, también los
  * ficheros. Una tarjeta duplicada a mano (mismo fichero de foto en dos fichas)
  * no debería darse en esta app, pero comprobarlo es gratis y evita un cabo

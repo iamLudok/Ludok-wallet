@@ -12,8 +12,9 @@
  * `address` (fijos) a `phones`/`addresses` (listas). Una copia v1 se sigue
  * aceptando: `backupCore.ts` migra esos campos al importar.
  *
- * v3: la tarjeta lleva `sortOrder` (orden manual) y, en caché, `lat`/`lng`
- * para el mapa. Una copia v1 o v2 se sigue aceptando: `backupCore.ts` asigna
- * un `sortOrder` a lo que llegue sin él, por nombre (como se enseñaban antes).
+ * v3: la tarjeta lleva `sortOrder` (orden manual). Una copia v1 o v2 se sigue
+ * aceptando: `backupCore.ts` asigna un `sortOrder` a lo que llegue sin él, por
+ * nombre (como se enseñaban antes). Las copias v3 hechas cuando existía el
+ * mapa traen además `lat`/`lng`: se ignoran al importar.
  */
 export const SCHEMA_VERSION = 3

@@ -20,7 +20,6 @@ import {
   getCard,
   allTags,
   reorderCards,
-  setCardCoords,
   saveTicket,
   deleteTicket,
   getTicket,
@@ -121,15 +120,6 @@ async function main() {
 
   const orderD = await saveCard({ name: 'D', type: 'other' })
   eq('una tarjeta nueva entra detrás de la última, no en 0', (await getCard(orderD))?.sortOrder, 3)
-
-  console.log('\n=== 5c. setCardCoords guarda la caché del mapa sin tocar updatedAt ===')
-  const beforeCoords = await getCard(orderA)
-  await new Promise((r) => setTimeout(r, 5))
-  await setCardCoords(orderA, 43.26, -2.94)
-  const afterCoords = await getCard(orderA)
-  eq('latitud guardada', afterCoords?.lat, 43.26)
-  eq('longitud guardada', afterCoords?.lng, -2.94)
-  eq('updatedAt no cambia: es caché, no una edición', afterCoords?.updatedAt, beforeCoords?.updatedAt)
 
   console.log('\n=== 6. saveTicket crea y actualiza ===')
   files = await useFreshDb()

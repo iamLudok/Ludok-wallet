@@ -43,14 +43,6 @@ export interface Card {
    * campos de aquí abajo.
    */
   sortOrder: number
-  /**
-   * Coordenadas para el mapa, si ya se han podido calcular a partir de la
-   * primera dirección (ver `lib/geocode.ts`). Ausentes hasta que el mapa las
-   * resuelve la primera vez; luego se quedan en caché aquí para no volver a
-   * pedirlas.
-   */
-  lat?: number
-  lng?: number
   addedAt: number
   updatedAt: number
 }

@@ -19,8 +19,6 @@ CREATE TABLE IF NOT EXISTS cards (
   social TEXT,
   tags TEXT,
   sortOrder INTEGER NOT NULL DEFAULT 0,
-  lat REAL,
-  lng REAL,
   addedAt INTEGER NOT NULL,
   updatedAt INTEGER NOT NULL
 );
@@ -98,12 +96,22 @@ export const MIGRATIONS: string[] = [
     SELECT COUNT(*) FROM cards AS c2 WHERE c2.name < cards.name OR (c2.name = cards.name AND c2.id < cards.id)
   );
   `,
-  // v3 → v4: coordenadas en caché para el mapa de tarjetas. Empiezan vacías
-  // (NULL): el mapa las va calculando la primera vez que las necesita, con
-  // la dirección de cada tarjeta, y las guarda aquí para no volver a pedirlas.
+  // v3 → v4: coordenadas en caché para el mapa de tarjetas. El mapa se quitó
+  // después (mandaba las direcciones a OpenStreetMap), y con él estas dos
+  // columnas del esquema: se quedan muertas en las bases que ya las tenían,
+  // como `phone`/`phone2` (ver v4 → v5). El paso se mantiene porque el índice
+  // del array es la versión, y quitarlo descuadraría `user_version`.
   `
   ALTER TABLE cards ADD COLUMN lat REAL;
   ALTER TABLE cards ADD COLUMN lng REAL;
+  `,
+  // v4 → v5: se borran las coordenadas que el mapa llegó a guardar. Ya no las
+  // lee nadie, y son datos de dónde está cada tarjeta que no hace falta
+  // conservar. Se vacían en vez de hacer DROP COLUMN, por lo mismo que en
+  // v1 → v2. Toda base en v4 tiene estas columnas (o las creó el CREATE_SQL de
+  // entonces o el paso de arriba), así que este UPDATE no falla.
+  `
+  UPDATE cards SET lat = NULL, lng = NULL;
   `,
 ]
 

@@ -32,8 +32,6 @@ export function rowToCard(r: CardRow): Card {
     social: u(r.social),
     tags: parseStringList(r.tags),
     sortOrder: r.sortOrder,
-    lat: u(r.lat),
-    lng: u(r.lng),
     addedAt: r.addedAt,
     updatedAt: r.updatedAt,
   }
@@ -54,8 +52,6 @@ export function cardToRow(c: Card): CardRow {
     social: n(c.social),
     tags: serializeStringList(c.tags),
     sortOrder: c.sortOrder,
-    lat: n(c.lat),
-    lng: n(c.lng),
     addedAt: c.addedAt,
     updatedAt: c.updatedAt,
   }
