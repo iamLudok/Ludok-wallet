@@ -4,7 +4,7 @@
 
 # Ludok Wallet
 
-**Your business cards and event tickets in one place, on your phone.**
+**Your business cards, event tickets and record collection in one place, on your phone.**
 
 Snap a card and the app reads its phone, email and address for you. Import a ticket from a photo or PDF and its code is ready to scan at the door.<br>
 Your data lives on your phone. No accounts. No servers. No tracking.
@@ -22,14 +22,11 @@ Your data lives on your phone. No accounts. No servers. No tracking.
 
 ---
 
-<!--
-## Screenshots
-
 <p align="center">
-  <img src="docs/screenshots/tickets.png" width="230" alt="Tickets">
-  <img src="docs/screenshots/cards.png" width="230" alt="Cards">
+<img src="docs/screenshots/cards.webp" alt="Cards grouped by type, with their photo" width="260">
 </p>
--->
+
+<p align="center"><sub>Cards</sub></p>
 
 ## Table of Contents
 
@@ -81,10 +78,17 @@ free, without an account, and entirely on your phone**.
 - ➕ **Never an empty form**: adding a ticket asks for the camera, a gallery image or a PDF. The app reads the code and, with OCR, the title, venue, date and price, and leaves the form filled in for you to confirm.
 - 📤 **Share from the gallery**: share a ticket photo with Ludok Wallet from Android's share menu, and it's imported the same way.
 
+### Vinyl records
+
+- 💿 **Your collection**: front and back cover, artist, title, year, format, label, catalog number, barcode, condition (the Goldmine scale Discogs uses: M, NM, VG+…), price paid, estimated value and notes.
+- 🔎 **Barcode without typing it**: scan it with the camera, or the app finds it on the back cover photo by itself. Both run on the phone.
+- 🌐 **"Ver en Discogs"**: opens the record's Discogs search in your browser (by barcode, or by artist, title and catalog number) so you can check prices. It's a plain link: the app itself never connects to Discogs.
+- 💶 **Collection value**: the list shows the total of the values you've noted, and each record remembers when you last checked its value.
+
 ### General
 
 - 🌗 **Dark and light theme**, selectable in *Ajustes → Tema*.
-- ⚠️ **Backup reminder** on the Cards and Tickets lists if you haven't made a backup in 7 days.
+- ⚠️ **Backup reminder** on the Tickets, Cards and Vinyl lists if you haven't made a backup in 7 days.
 
 The app's interface is in Spanish.
 
@@ -238,7 +242,7 @@ photo store:
 
 ```bash
 npm run verify:data       # backup round trip, data AND photos, password never exported
-npm run verify:library    # create/edit/delete cards and tickets, orphaned photos
+npm run verify:library    # create/edit/delete cards, tickets and records, orphaned photos, prices
 npm run verify:migration  # the schema is created idempotently
 npm run verify:ocr        # the phone/email/address/date/price parser
 npm run verify:codes      # all 13 code formats are drawn and validated
@@ -254,8 +258,9 @@ The logic gets its database from [`src/lib/dbRef.ts`](src/lib/dbRef.ts) instead 
 ```
 Ludok-wallet/
 ├── app/                    ← Routes (expo-router)
-│   ├── (tabs)/             ← Tickets, Cards, Settings
+│   ├── (tabs)/             ← Tickets, Cards, Vinyl, Settings
 │   ├── tarjeta/            ← Card detail and form
+│   ├── vinilo/             ← Record detail and form
 │   └── entrada/            ← Ticket detail, form and scanner
 ├── src/
 │   ├── lib/                ← Data and logic (SQLite, photos, backups, OCR, codes, ticket import)
